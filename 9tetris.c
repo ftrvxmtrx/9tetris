@@ -117,6 +117,7 @@ Image *colorimages[8];
 int field[FIELD_HEIGHT][FIELD_WIDTH];
 Piece *currentpiece;
 Point currentpiecepos;
+Rectangle center;
 
 vlong score;
 int level = 1;
@@ -291,7 +292,7 @@ drawblock(int row, int col, int color)
 	int x = col * BLOCK_SIZE;
 	/* Block exclusive border */
 	Rectangle r = Rect(x, y, x + BLOCK_SIZE, y + BLOCK_SIZE);
-	Rectangle r2 = rectaddpt(r, screen->r.min);
+	Rectangle r2 = rectaddpt(r, center.min);
 	draw(screen, r2, colorimages[color], nil, ZP);
 }
 
@@ -302,13 +303,13 @@ drawgrid(void)
 	for(int i = 0; i <= FIELD_HEIGHT; i++){
 		Point p0 = Pt(0, i * BLOCK_SIZE);
 		Point p1 = Pt(FIELD_WIDTH * BLOCK_SIZE, i * BLOCK_SIZE);
-		line(screen, addpt(p0, screen->r.min), addpt(p1, screen->r.min), 0, 0, 0, display->black, ZP);
+		line(screen, addpt(p0, center.min), addpt(p1, center.min), 0, 0, 0, display->black, ZP);
 	}
 	/* Vertial lines */
 	for(int j = 0; j <= FIELD_WIDTH; j++){
 		Point p0 = Pt(j * BLOCK_SIZE, 0);
 		Point p1 = Pt(j * BLOCK_SIZE, FIELD_HEIGHT * BLOCK_SIZE);
-		line(screen, addpt(p0, screen->r.min), addpt(p1, screen->r.min), 0, 0, 0, display->black, ZP);
+		line(screen, addpt(p0, center.min), addpt(p1, center.min), 0, 0, 0, display->black, ZP);
 	}
 }
 
@@ -346,7 +347,7 @@ drawinfo(void)
 	snprint(scorestr, 100, "Score: %zd", score);
 
 	if(isgamerunning)
-		string(screen, addpt(screen->r.min, scorept), display->black, ZP, font, scorestr);
+		string(screen, addpt(center.min, scorept), display->black, ZP, font, scorestr);
 
 	Point lvlpt = addpt(scorept, Pt(0, 20));
 
@@ -355,20 +356,20 @@ drawinfo(void)
 	snprint(levelstr, 100, "Lvl: %d", level);
 
 	if(isgamerunning)
-		string(screen, addpt(screen->r.min, lvlpt), display->black, ZP, font, levelstr);
+		string(screen, addpt(center.min, lvlpt), display->black, ZP, font, levelstr);
 
 	char helpstr[100];
 	memset(helpstr, 0, 100);
 	if(isgamepaused)
 		snprint(helpstr, 100, "** PAUSED **");
 	else if(isgameover)
-		snprint(helpstr, 100, "** GAME OVER ** Press n for new game");
+		snprint(helpstr, 100, "** GAME OVER ** Press enter for new game");
 	else if(!isgamerunning)
 		snprint(helpstr, 100, "Rotate: q/w, Move: o/p, Fast: space, Start/Pause: enter");
 
 	Point helppt = Pt(10, FIELD_HEIGHT * BLOCK_SIZE + 10);
 
-	string(screen, addpt(screen->r.min, helppt), display->black, ZP, font, helpstr);
+	string(screen, addpt(center.min, helppt), display->black, ZP, font, helpstr);
 }
 
 void
@@ -561,6 +562,7 @@ main(int argc, char **argv)
 	if(initdraw(nil, nil, "9Tetris") < 0)
 		sysfatal("initdraw");
 	einit(Emouse | Ekeyboard);
+	eresized(0);
 
 	setupcolors();
 	showlogo();
@@ -597,6 +599,16 @@ main(int argc, char **argv)
 void
 eresized(int new)
 {
+	int w, h;
+
 	if(new && getwindow(display, Refmesg) < 0)
 		sysfatal("can't reattach to window");
+
+	w = (Dx(screen->r) - FIELD_WIDTH*BLOCK_SIZE) / 2;
+	h = (Dy(screen->r) - FIELD_HEIGHT*BLOCK_SIZE) / 3;
+	center = screen->r;
+	center.min.x += w;
+	center.max.x -= w;
+	center.min.y += h;
+	center.max.y -= h;
 }
