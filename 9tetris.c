@@ -332,7 +332,7 @@ drawinfo(void){
 	Point scorept = Pt(FIELD_WIDTH * BLOCK_SIZE + 10, 10);
 	char scorestr[100];
 	memset(scorestr, 0, 100);
-	snprint(scorestr, 100, "Score: %d", score);
+	snprint(scorestr, 100, "Score: %zd", score);
 	
 	if(isgamerunning)
 		string(screen, addpt(screen->r.min, scorept), display->black, ZP, font, scorestr);
@@ -388,8 +388,7 @@ ispiececolliding(TPiece *p, Point pos){
 	/* Check for collisions */
 	for(int i = 0; i < PIECE_SIZE; i++)
 		for(int j = 0; j < PIECE_SIZE; j++){
-			int a = 0;
-
+			int a;
 			int b = ( pos.y + i >= 0 &&
 					  pos.x + j >= 0 &&
 				      pos.y + i < FIELD_HEIGHT &&
@@ -530,6 +529,8 @@ startgame(void){
 
 void
 main(int argc, char *argv[]){
+	USED(argc, argv);
+
 	if(initdraw(0, 0, "9Tetris") < 0) 
 		sysfatal("initdraw");
 	einit(Emouse | Ekeyboard);
@@ -538,7 +539,7 @@ main(int argc, char *argv[]){
 	showlogo();
 
 	vlong currtime = nsec();
-	vlong prevtime = 0;
+	vlong prevtime;
 
 	etimer(0, 10);
 	Event ev;
