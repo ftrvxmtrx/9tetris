@@ -338,38 +338,55 @@ drawcurrentpiece(void)
 	}
 }
 
+static char *helps[3][5] = {
+	{
+		"** PAUSED **",
+		nil,
+	},
+	{
+		"** GAME OVER **",
+		"Press enter for a new game",
+		nil,
+	},
+	{
+		"Move:        o/p  ",
+		"Rotate:      q/w  ",
+		"Fast:        space",
+		"Start/Pause: enter",
+		nil,
+	},
+};
+
 void
 drawinfo(void)
 {
 	Point scorept = Pt(FIELD_WIDTH * BLOCK_SIZE + 10, 10);
-	char scorestr[100];
-	memset(scorestr, 0, 100);
-	snprint(scorestr, 100, "Score: %zd", score);
+	char s[64], **hs;
 
-	if(isgamerunning)
-		string(screen, addpt(center.min, scorept), display->black, ZP, font, scorestr);
+	if(isgamerunning){
+		snprint(s, sizeof(s), "Score: %zd", score);
+		string(screen, addpt(center.min, scorept), display->black, ZP, font, s);
+		snprint(s, sizeof(s), "Level: %d", level);
+		string(screen, addpt(scorept, Pt(0, 20)), display->black, ZP, font, s);
+	}
 
-	Point lvlpt = addpt(scorept, Pt(0, 20));
-
-	char levelstr[100];
-	memset(levelstr, 0, 100);
-	snprint(levelstr, 100, "Lvl: %d", level);
-
-	if(isgamerunning)
-		string(screen, addpt(center.min, lvlpt), display->black, ZP, font, levelstr);
-
-	char helpstr[100];
-	memset(helpstr, 0, 100);
+	Point h, hc = addpt(center.min, Pt(FIELD_WIDTH*BLOCK_SIZE/2, FIELD_HEIGHT*BLOCK_SIZE+10));
 	if(isgamepaused)
-		snprint(helpstr, 100, "** PAUSED **");
+		hs = helps[0];
 	else if(isgameover)
-		snprint(helpstr, 100, "** GAME OVER ** Press enter for new game");
+		hs = helps[1];
 	else if(!isgamerunning)
-		snprint(helpstr, 100, "Rotate: q/w, Move: o/p, Fast: space, Start/Pause: enter");
-
-	Point helppt = Pt(10, FIELD_HEIGHT * BLOCK_SIZE + 10);
-
-	string(screen, addpt(center.min, helppt), display->black, ZP, font, helpstr);
+		hs = helps[2];
+	else
+		hs = nil;
+	h = hc;
+	while(hs != nil && *hs != nil){
+		h.x -= stringwidth(font, *hs)/2;
+		string(screen, h, display->black, ZP, font, *hs);
+		h.x = hc.x;
+		h.y += font->height;
+		hs++;
+	}
 }
 
 void
