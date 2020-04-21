@@ -113,7 +113,7 @@ int big9logo[FIELD_HEIGHT][FIELD_WIDTH] = {
 	{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
 };
 
-Image *colorimages[8];
+Image *colorimages[8], *grey;
 int field[FIELD_HEIGHT][FIELD_WIDTH];
 Piece *currentpiece;
 Point currentpiecepos;
@@ -130,6 +130,25 @@ int iscurrentpiececolliding(void);
 void currentpiecestuck(void);
 void clearrows(void);
 void startgame(void);
+
+static char *helps[3][5] = {
+	{
+		"** PAUSED **",
+		nil,
+	},
+	{
+		"** GAME OVER **",
+		"Press enter for a new game",
+		nil,
+	},
+	{
+		"Move:        o/p  ",
+		"Rotate:      q/w  ",
+		"Fast:        space",
+		"Start/Pause: enter",
+		nil,
+	},
+};
 
 void
 rotatepieceleft(Piece *p)
@@ -277,6 +296,7 @@ setupcolors(void)
 	colorimages[ORANGE] = eallocimage(r, 1, DDarkyellow);
 	colorimages[CYAN] = eallocimage(r, 1, DCyan);
 	colorimages[PURPLE] = eallocimage(r, 1, DPurpleblue);
+	grey = eallocimage(r, 1, 0xb0b0b0ff);
 }
 
 void
@@ -299,17 +319,18 @@ drawblock(int row, int col, int color)
 void
 drawgrid(void)
 {
-	/* Horizontal lines */
-	for(int i = 0; i <= FIELD_HEIGHT; i++){
+	int i;
+
+	for(i = 0; i <= FIELD_HEIGHT; i++){
 		Point p0 = Pt(0, i * BLOCK_SIZE);
-		Point p1 = Pt(FIELD_WIDTH * BLOCK_SIZE, i * BLOCK_SIZE);
-		line(screen, addpt(p0, center.min), addpt(p1, center.min), 0, 0, 0, display->black, ZP);
+		Point p1 = Pt(FIELD_WIDTH * BLOCK_SIZE+1, i * BLOCK_SIZE);
+		line(screen, addpt(p0, center.min), addpt(p1, center.min), 0, 0, 0, (i % FIELD_HEIGHT) ? grey : display->black, ZP);
 	}
-	/* Vertial lines */
-	for(int j = 0; j <= FIELD_WIDTH; j++){
-		Point p0 = Pt(j * BLOCK_SIZE, 0);
-		Point p1 = Pt(j * BLOCK_SIZE, FIELD_HEIGHT * BLOCK_SIZE);
-		line(screen, addpt(p0, center.min), addpt(p1, center.min), 0, 0, 0, display->black, ZP);
+
+	for(i = 0; i <= FIELD_WIDTH; i++){
+		Point p0 = Pt(i * BLOCK_SIZE, (i % FIELD_WIDTH) ? 1 : 0);
+		Point p1 = Pt(i * BLOCK_SIZE, FIELD_HEIGHT * BLOCK_SIZE);
+		line(screen, addpt(p0, center.min), addpt(p1, center.min), 0, 0, 0, (i % FIELD_WIDTH) ? grey : display->black, ZP);
 	}
 }
 
@@ -337,25 +358,6 @@ drawcurrentpiece(void)
 		}
 	}
 }
-
-static char *helps[3][5] = {
-	{
-		"** PAUSED **",
-		nil,
-	},
-	{
-		"** GAME OVER **",
-		"Press enter for a new game",
-		nil,
-	},
-	{
-		"Move:        o/p  ",
-		"Rotate:      q/w  ",
-		"Fast:        space",
-		"Start/Pause: enter",
-		nil,
-	},
-};
 
 void
 drawinfo(void)
@@ -447,7 +449,6 @@ iscurrentpiececolliding(void)
 {
 	return ispiececolliding(currentpiece, currentpiecepos);
 }
-
 
 int
 isrowfull(int row)
