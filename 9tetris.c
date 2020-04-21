@@ -124,6 +124,7 @@ int level = 1;
 int isgamepaused;
 int isgamerunning;
 int isgameover;
+int redraw = 1;
 
 /* Forward declarations */
 int iscurrentpiececolliding(void);
@@ -369,7 +370,8 @@ drawinfo(void)
 		snprint(s, sizeof(s), "Score: %zd", score);
 		string(screen, addpt(center.min, scorept), display->black, ZP, font, s);
 		snprint(s, sizeof(s), "Level: %d", level);
-		string(screen, addpt(scorept, Pt(0, 20)), display->black, ZP, font, s);
+		scorept.y += font->height;
+		string(screen, addpt(center.min, scorept), display->black, ZP, font, s);
 	}
 
 	Point h, hc = addpt(center.min, Pt(FIELD_WIDTH*BLOCK_SIZE/2, FIELD_HEIGHT*BLOCK_SIZE+10));
@@ -399,6 +401,7 @@ drawscreen(void)
 		drawcurrentpiece();
 	drawgrid();
 	drawinfo();
+	redraw = 0;
 }
 
 void
@@ -433,12 +436,10 @@ ispiececolliding(Piece *p, Point pos)
 
 			/* Collision with other piece? */
 			if(b)
-				a |= p->data[i][j] &&
-					field[pos.y + i][pos.x + j];
+				a |= p->data[i][j] && field[pos.y + i][pos.x + j];
 
-			if(a){
+			if(a)
 				return 1;
-			}
 		}
 
 	return 0;
@@ -543,12 +544,13 @@ dologic(vlong ticks)
 			spawnnewpiece();
 
 		sincelastmove = 0;
+		redraw = 1;
 	}
-
 }
 
 void
-showlogo(void){
+showlogo(void)
+{
 	memset(field, 0, sizeof(int) * FIELD_HEIGHT * FIELD_WIDTH);
 	for(int i = 0; i < FIELD_HEIGHT; i++){
 		for(int j = 0; j < FIELD_WIDTH; j++){
@@ -570,6 +572,7 @@ startgame(void)
 
 	memset(field, 0, sizeof(int) * FIELD_HEIGHT * FIELD_WIDTH);
 	spawnnewpiece();
+	redraw = 1;
 }
 
 void
@@ -579,7 +582,7 @@ main(int argc, char **argv)
 
 	if(initdraw(nil, nil, "9Tetris") < 0)
 		sysfatal("initdraw");
-	einit(Emouse | Ekeyboard);
+	einit(Ekeyboard);
 	eresized(0);
 
 	setupcolors();
@@ -588,20 +591,21 @@ main(int argc, char **argv)
 	vlong currtime = nsec();
 	vlong prevtime;
 
-	etimer(0, 10); /* FIXME: wat. */
+	etimer(0, 20); /* FIXME: wat. */
 	Event ev;
 	int e;
 	for(;;){
-		clearscreen();
-		drawscreen();
-		flushimage(display, 1);
+		if(redraw){
+			clearscreen();
+			drawscreen();
+			flushimage(display, 1);
+		}
 
 		e = event(&ev);
 		switch(e){
-			case Emouse:
-				break;
 			case Ekeyboard:
 				handlekbd(ev.kbdc);
+				redraw = 1;
 				break;
 			default:
 				break;
